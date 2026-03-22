@@ -56,6 +56,13 @@
                         <h5><i class="bi bi-check-circle me-2"></i>File Integrity Verified!</h5>
                         <p class="mb-0">File has been decrypted and all security checks passed.</p>
                     </div>
+                    {% elif result.pipeline_error %}
+                    <div class="alert alert-danger">
+                        <h5><i class="bi bi-exclamation-triangle me-2"></i>Pipeline Error!</h5>
+                        <p class="mb-1">The receive pipeline failed before verification could complete.</p>
+                        <p class="mb-0"><strong>Step:</strong> {{ result.error_step }}<br>
+                        <strong>Error:</strong> {{ result.error_message }}</p>
+                    </div>
                     {% else %}
                     <div class="alert alert-danger">
                         <h5><i class="bi bi-x-circle me-2"></i>File Rejected!</h5>
@@ -69,6 +76,7 @@
                     </div>
                     {% endif %}
 
+                    {% if not result.pipeline_error %}
                     <!-- Verification Details -->
                     <div class="card mt-3">
                         <div class="card-header">Verification Details</div>
@@ -101,6 +109,7 @@
                             </div>
                         </div>
                     </div>
+                    {% endif %}
 
                     {% if result.metrics %}
                     <div class="card mt-3">

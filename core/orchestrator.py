@@ -256,6 +256,13 @@ class SecurityOrchestrator:
                 )
                 raise PipelineError('authentication', 'You are not the intended receiver')
 
+            if transfer.status not in ('sent', 'received'):
+                raise PipelineError(
+                    'status',
+                    f"Transfer already processed (status: {transfer.status}). "
+                    f"Cannot receive again."
+                )
+
             transfer.status = 'received'
             transfer.save()
 

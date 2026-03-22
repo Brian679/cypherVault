@@ -241,7 +241,22 @@ def receive_file_view(request, transfer_id):
 
         except PipelineError as e:
             messages.error(request, f"Receive failed at '{e.step}': {e.message}")
-            result = {'success': False, 'error': str(e)}
+            result = {
+                'success': False,
+                'pipeline_error': True,
+                'error_step': e.step,
+                'error_message': e.message,
+                'error': str(e),
+            }
+        except Exception as e:
+            messages.error(request, f"Unexpected error: {str(e)}")
+            result = {
+                'success': False,
+                'pipeline_error': True,
+                'error_step': 'unknown',
+                'error_message': str(e),
+                'error': str(e),
+            }
 
     # Refresh transfer from DB
     transfer.refresh_from_db()
