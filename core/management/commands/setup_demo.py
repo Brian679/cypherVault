@@ -7,7 +7,7 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 
 from core.models import UserProfile
-from core.crypto import RSACipher, KeyManager
+from core.crypto import KeyManager
 
 
 class Command(BaseCommand):
@@ -23,7 +23,6 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         import os
         from django.conf import settings as django_settings
-        rsa = RSACipher()
         keys_dir = os.path.join(django_settings.BASE_DIR, 'keys')
         key_manager = KeyManager(keys_dir)
 
@@ -70,22 +69,13 @@ class Command(BaseCommand):
                 user.set_password(info['password'])
                 user.save()
 
-                # Generate RSA key pair (returns PEM bytes)
-                private_pem, public_pem_bytes = rsa.generate_keypair()
-                public_pem = public_pem_bytes.decode()
+                # Generate RSA key pair and save to filesystem
+                key_info = key_manager.generate_user_keys(info['username'])
 
-                # Save keys to filesystem
-                key_manager.generate_user_keys(info['username'])
-
-                # Create user profile
-                from Crypto.Hash import SHA256
-                fingerprint = SHA256.new(
-                    public_pem_bytes
-                ).hexdigest()[:16].upper()
-
+                # Create user profile using the SAME keys
                 profile, _ = UserProfile.objects.get_or_create(user=user)
-                profile.public_key = public_pem
-                profile.key_fingerprint = fingerprint
+                profile.public_key = key_info['public_key'].decode()
+                profile.key_fingerprint = key_info['fingerprint']
                 profile.save()
 
                 self.stdout.write(
@@ -111,18 +101,11 @@ class Command(BaseCommand):
                 first_name='Admin',
                 last_name='CipherVault',
             )
-            private_pem, public_pem_bytes = rsa.generate_keypair()
-            public_pem = public_pem_bytes.decode()
-            key_manager.generate_user_keys('admin')
-
-            from Crypto.Hash import SHA256
-            fingerprint = SHA256.new(
-                public_pem_bytes
-            ).hexdigest()[:16].upper()
+            key_info = key_manager.generate_user_keys('admin')
 
             profile, _ = UserProfile.objects.get_or_create(user=admin_user)
-            profile.public_key = public_pem
-            profile.key_fingerprint = fingerprint
+            profile.public_key = key_info['public_key'].decode()
+            profile.key_fingerprint = key_info['fingerprint']
             profile.save()
 
             self.stdout.write(
