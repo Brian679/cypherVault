@@ -30,7 +30,7 @@ SECRET_KEY = os.environ.get(
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('true', '1', 'yes')
 
 # PythonAnywhere: set your username below
-PYTHONANYWHERE_USERNAME = os.environ.get('PYTHONANYWHERE_USERNAME', 'YOUR_PA_USERNAME')
+PYTHONANYWHERE_USERNAME = os.environ.get('PYTHONANYWHERE_USERNAME', 'cyphervault')
 
 ALLOWED_HOSTS = [
     f'{PYTHONANYWHERE_USERNAME}.pythonanywhere.com',
