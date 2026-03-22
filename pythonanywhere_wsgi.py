@@ -9,7 +9,7 @@ import os
 import sys
 
 # Add your project directory to the sys.path
-project_home = '/home/cyphervault/cypherVault'
+project_home = os.path.expanduser('~/cypherVault')
 if project_home not in sys.path:
     sys.path.insert(0, project_home)
 
