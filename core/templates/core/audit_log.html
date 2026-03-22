@@ -1,0 +1,101 @@
+{% extends "core/base.html" %}
+{% load vault_tags %}
+
+{% block title %}Audit Log - CipherVault{% endblock %}
+{% block nav_audit %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">Audit Log</h4>
+    {% if is_admin and chain_status %}
+    <div>
+        {% if chain_status.valid %}
+        <span class="badge bg-success py-2 px-3">
+            <i class="bi bi-check-circle me-1"></i>Chain Intact ({{ chain_status.total_entries }} entries)
+        </span>
+        {% else %}
+        <span class="badge bg-danger py-2 px-3">
+            <i class="bi bi-exclamation-triangle me-1"></i>Chain BROKEN at entry {{ chain_status.broken_at }}
+        </span>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+
+{% if is_admin and chain_status %}
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-link-45deg me-2"></i>Hash Chain Verification
+    </div>
+    <div class="card-body">
+        {% if chain_status.valid %}
+        <div class="alert alert-success mb-0">
+            <i class="bi bi-shield-check me-2"></i>
+            <strong>Tamper-Evident Chain: INTACT</strong><br>
+            {{ chain_status.details }}
+        </div>
+        {% else %}
+        <div class="alert alert-danger mb-0">
+            <i class="bi bi-shield-exclamation me-2"></i>
+            <strong>Tamper-Evident Chain: BROKEN!</strong><br>
+            {{ chain_status.details }}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-journal-text me-2"></i>
+        {% if is_admin %}All System Logs{% else %}Your Activity Log{% endif %}
+    </div>
+    <div class="card-body p-0">
+        {% if logs %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Action</th>
+                        {% if is_admin %}<th>Actor</th>{% endif %}
+                        <th>Details</th>
+                        <th>Result</th>
+                        <th>Chain Hash</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td class="small">{{ log.timestamp|date:"M d, H:i:s" }}</td>
+                        <td><span class="badge {{ log.action|action_badge }}">{{ log.get_action_display }}</span></td>
+                        {% if is_admin %}<td>{{ log.actor.username|default:"system" }}</td>{% endif %}
+                        <td class="small">{{ log.details|truncatechars:60 }}</td>
+                        <td>
+                            {% if log.verification_result is True %}
+                            <i class="bi bi-check-circle text-success"></i>
+                            {% elif log.verification_result is False %}
+                            <i class="bi bi-x-circle text-danger"></i>
+                            {% else %}
+                            <i class="bi bi-dash text-muted"></i>
+                            {% endif %}
+                        </td>
+                        <td><code class="small">{{ log.chain_hash|truncatechars:12 }}</code></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-4">No audit entries found.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if not is_admin %}
+<div class="alert alert-info mt-4">
+    <i class="bi bi-info-circle me-2"></i>
+    You are viewing your personal activity log. Admin users can view all system logs and verify the hash chain.
+</div>
+{% endif %}
+{% endblock %}

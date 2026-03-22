@@ -1,0 +1,231 @@
+{% extends "core/base.html" %}
+{% load vault_tags %}
+
+{% block title %}Dashboard - CipherVault{% endblock %}
+{% block nav_dashboard %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h4 class="mb-1">Dashboard</h4>
+        <p class="text-muted mb-0">Welcome back, {{ user.username }}</p>
+    </div>
+    <a href="{% url 'send_file' %}" class="btn btn-vault">
+        <i class="bi bi-upload me-2"></i>Send File
+    </a>
+</div>
+
+<!-- Stats Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_sent }}</div>
+            <div class="stat-label">Files Sent</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number">{{ total_received }}</div>
+            <div class="stat-label">Files Received</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number" style="color: #059669;">{{ verified_count }}</div>
+            <div class="stat-label">Verified</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card">
+            <div class="stat-number" style="color: #dc2626;">{{ rejected_count }}</div>
+            <div class="stat-label">Rejected</div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Transfers -->
+{% if pending_transfers %}
+<div class="card mb-4">
+    <div class="card-header d-flex align-items-center">
+        <i class="bi bi-bell text-warning me-2"></i>
+        Pending Incoming Transfers ({{ pending_transfers.count }})
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>From</th>
+                        <th>File</th>
+                        <th>Size</th>
+                        <th>Date</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in pending_transfers %}
+                    <tr>
+                        <td>{{ t.sender.username }}</td>
+                        <td>{{ t.original_filename }}</td>
+                        <td>{{ t.file_size|filesizeformat_custom }}</td>
+                        <td>{{ t.created_at|timesince }} ago</td>
+                        <td>
+                            <a href="{% url 'receive_file' t.id %}" class="btn btn-sm btn-vault">
+                                <i class="bi bi-download me-1"></i>Receive & Verify
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4">
+    <!-- Recent Sent -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-arrow-up-circle me-2"></i>Recent Sent Files
+            </div>
+            <div class="card-body p-0">
+                {% if sent_transfers %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>To</th>
+                                <th>File</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in sent_transfers %}
+                            <tr>
+                                <td>{{ t.receiver.username }}</td>
+                                <td>
+                                    <a href="{% url 'transfer_detail' t.id %}" class="text-decoration-none" style="color: var(--cv-primary);">
+                                        {{ t.original_filename|truncatechars:25 }}
+                                    </a>
+                                </td>
+                                <td><span class="badge {{ t.status|status_badge }}">{{ t.get_status_display }}</span></td>
+                                <td>{{ t.created_at|timesince }} ago</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">No files sent yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Received -->
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-arrow-down-circle me-2"></i>Recent Received Files
+            </div>
+            <div class="card-body p-0">
+                {% if received_transfers %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>From</th>
+                                <th>File</th>
+                                <th>Status</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for t in received_transfers %}
+                            <tr>
+                                <td>{{ t.sender.username }}</td>
+                                <td>
+                                    <a href="{% url 'transfer_detail' t.id %}" class="text-decoration-none" style="color: var(--cv-primary);">
+                                        {{ t.original_filename|truncatechars:25 }}
+                                    </a>
+                                </td>
+                                <td><span class="badge {{ t.status|status_badge }}">{{ t.get_status_display }}</span></td>
+                                <td>{{ t.created_at|timesince }} ago</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-4">No files received yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="bi bi-clock-history me-2"></i>Recent Activity
+    </div>
+    <div class="card-body p-0">
+        {% if recent_logs %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Time</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in recent_logs %}
+                    <tr>
+                        <td>{{ log.timestamp|timesince }} ago</td>
+                        <td><span class="badge {{ log.action|action_badge }}">{{ log.get_action_display }}</span></td>
+                        <td class="small">{{ log.details|truncatechars:80 }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-4">No activity yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Key Info -->
+<div class="card mt-4">
+    <div class="card-header">
+        <i class="bi bi-key me-2"></i>Your Key Information
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4">
+                <small class="text-muted">Key Version</small>
+                <p class="mb-2">v{{ profile.key_version }}</p>
+            </div>
+            <div class="col-md-4">
+                <small class="text-muted">Key Fingerprint</small>
+                <p class="mb-2 hash-display">{{ profile.key_fingerprint|default:"Not generated" }}</p>
+            </div>
+            <div class="col-md-4">
+                <small class="text-muted">Status</small>
+                <p>
+                    {% if profile.is_key_revoked %}
+                    <span class="badge bg-danger">Revoked</span>
+                    {% else %}
+                    <span class="badge bg-success">Active</span>
+                    {% endif %}
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

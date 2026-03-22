@@ -1,0 +1,126 @@
+{% extends "core/base.html" %}
+
+{% block title %}Performance - CipherVault{% endblock %}
+{% block nav_performance %}active{% endblock %}
+
+{% block content %}
+<h4 class="mb-4">Performance Monitoring</h4>
+
+<!-- System Stats -->
+<div class="row g-3 mb-4">
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-number">{{ system_stats.cpu_percent }}%</div>
+            <div class="stat-label">CPU Usage</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-number">{{ system_stats.memory_percent }}%</div>
+            <div class="stat-label">Memory Usage</div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="stat-card">
+            <div class="stat-number">{{ system_stats.memory_available_mb|floatformat:0 }}</div>
+            <div class="stat-label">Available Memory (MB)</div>
+        </div>
+    </div>
+</div>
+
+<!-- Average Metrics -->
+<div class="card mb-4">
+    <div class="card-header">
+        <i class="bi bi-bar-chart me-2"></i>Average Operation Times
+    </div>
+    <div class="card-body">
+        <div class="row text-center">
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Avg Encryption</small>
+                    <h3 style="color: var(--cv-primary);">{{ avg_encryption }} ms</h3>
+                </div>
+                <div class="progress" style="height: 6px; background: #1e293b;">
+                    <div class="progress-bar" style="width: {% widthratio avg_encryption avg_total 100 %}%; background: var(--cv-primary);"></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Avg Hashing</small>
+                    <h3 style="color: #0891b2;">{{ avg_hashing }} ms</h3>
+                </div>
+                <div class="progress" style="height: 6px; background: #1e293b;">
+                    <div class="progress-bar" style="width: {% widthratio avg_hashing avg_total 100 %}%; background: #0891b2;"></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Avg Signing</small>
+                    <h3 style="color: #f59e0b;">{{ avg_signing }} ms</h3>
+                </div>
+                <div class="progress" style="height: 6px; background: #1e293b;">
+                    <div class="progress-bar" style="width: {% widthratio avg_signing avg_total 100 %}%; background: #f59e0b;"></div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="mb-3">
+                    <small class="text-muted d-block">Avg Total</small>
+                    <h3 style="color: #8b5cf6;">{{ avg_total }} ms</h3>
+                </div>
+                <div class="progress" style="height: 6px; background: #1e293b;">
+                    <div class="progress-bar" style="width: 100%; background: #8b5cf6;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Per-Transfer Metrics -->
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-graph-up me-2"></i>Transfer Performance History
+    </div>
+    <div class="card-body p-0">
+        {% if transfers %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>File</th>
+                        <th>Size</th>
+                        <th>Encrypt (ms)</th>
+                        <th>Hash (ms)</th>
+                        <th>Sign (ms)</th>
+                        <th>Total (ms)</th>
+                        <th>CPU %</th>
+                        <th>Mem (MB)</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for t in transfers %}
+                    <tr>
+                        <td>
+                            <a href="{% url 'transfer_detail' t.id %}" class="text-decoration-none" style="color: var(--cv-primary);">
+                                {{ t.original_filename|truncatechars:20 }}
+                            </a>
+                        </td>
+                        <td>{{ t.file_size|filesizeformat }}</td>
+                        <td>{{ t.encryption_time_ms|floatformat:2 }}</td>
+                        <td>{{ t.hashing_time_ms|floatformat:2 }}</td>
+                        <td>{{ t.signing_time_ms|floatformat:2 }}</td>
+                        <td><strong>{{ t.total_time_ms|floatformat:2 }}</strong></td>
+                        <td>{{ t.cpu_usage_percent|floatformat:1 }}</td>
+                        <td>{{ t.memory_usage_mb|floatformat:1 }}</td>
+                        <td class="small">{{ t.created_at|date:"M d, H:i" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center py-4">No transfer metrics available yet. Send some files to see performance data.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

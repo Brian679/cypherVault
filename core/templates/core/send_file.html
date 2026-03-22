@@ -1,0 +1,107 @@
+{% extends "core/base.html" %}
+
+{% block title %}Send File - CipherVault{% endblock %}
+{% block nav_send %}active{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-upload me-2"></i>Send File Securely
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Security Pipeline:</strong> Your file will be processed through the full CipherVault pipeline:
+                    <br>
+                    <small class="text-muted">
+                        Hash (SHA-256) &rarr; Sign (RSA) &rarr; Encrypt (AES-256) &rarr; Encrypt Key (RSA) &rarr; Store &amp; Send
+                    </small>
+                </div>
+
+                <form method="post" enctype="multipart/form-data" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_receiver" class="form-label">
+                            <i class="bi bi-person me-1"></i>Recipient
+                        </label>
+                        {{ form.receiver }}
+                        {% if form.receiver.errors %}
+                        <div class="text-danger small mt-1">{{ form.receiver.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">Select the user who should receive this file.</div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="id_file" class="form-label">
+                            <i class="bi bi-file-earmark-lock me-1"></i>File
+                        </label>
+                        {{ form.file }}
+                        {% if form.file.errors %}
+                        <div class="text-danger small mt-1">{{ form.file.errors.0 }}</div>
+                        {% endif %}
+                        <div class="form-text">The file will be encrypted with AES-256 before transfer.</div>
+                    </div>
+
+                    <button type="submit" class="btn btn-vault w-100 py-2" id="sendBtn">
+                        <i class="bi bi-shield-lock me-2"></i>Encrypt &amp; Send
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Pipeline Steps -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="bi bi-diagram-3 me-2"></i>CipherVault Security Pipeline
+            </div>
+            <div class="card-body">
+                <div class="pipeline-step pending">
+                    <i class="bi bi-1-circle me-3"></i>
+                    <div>
+                        <strong>Authenticate</strong>
+                        <small class="d-block text-muted">Verify sender identity and key validity</small>
+                    </div>
+                </div>
+                <div class="pipeline-step pending">
+                    <i class="bi bi-2-circle me-3"></i>
+                    <div>
+                        <strong>Hash (SHA-256)</strong>
+                        <small class="d-block text-muted">Generate integrity fingerprint of original file</small>
+                    </div>
+                </div>
+                <div class="pipeline-step pending">
+                    <i class="bi bi-3-circle me-3"></i>
+                    <div>
+                        <strong>Digital Signature (RSA)</strong>
+                        <small class="d-block text-muted">Sign hash with sender's private key</small>
+                    </div>
+                </div>
+                <div class="pipeline-step pending">
+                    <i class="bi bi-4-circle me-3"></i>
+                    <div>
+                        <strong>Encrypt File (AES-256)</strong>
+                        <small class="d-block text-muted">Symmetric encryption of file contents</small>
+                    </div>
+                </div>
+                <div class="pipeline-step pending">
+                    <i class="bi bi-5-circle me-3"></i>
+                    <div>
+                        <strong>Encrypt Key (RSA)</strong>
+                        <small class="d-block text-muted">Encrypt AES key with receiver's public key</small>
+                    </div>
+                </div>
+                <div class="pipeline-step pending">
+                    <i class="bi bi-6-circle me-3"></i>
+                    <div>
+                        <strong>Store &amp; Log</strong>
+                        <small class="d-block text-muted">Save encrypted package and create audit entry</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,159 @@
+{% extends "core/base.html" %}
+{% load vault_tags %}
+
+{% block title %}Transfer Detail - CipherVault{% endblock %}
+{% block nav_transfers %}active{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h4 class="mb-0">Transfer Detail</h4>
+    <a href="{% url 'transfer_list' %}" class="btn btn-outline-vault btn-sm">
+        <i class="bi bi-arrow-left me-1"></i>Back to Transfers
+    </a>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <span><i class="bi bi-file-earmark-lock me-2"></i>{{ transfer.original_filename }}</span>
+                <span class="badge {{ transfer.status|status_badge }}">{{ transfer.get_status_display }}</span>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <small class="text-muted">Sender</small>
+                        <p class="mb-2"><strong>{{ transfer.sender.username }}</strong></p>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Receiver</small>
+                        <p class="mb-2"><strong>{{ transfer.receiver.username }}</strong></p>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">File Size</small>
+                        <p class="mb-2">{{ transfer.file_size|filesizeformat_custom }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <small class="text-muted">Date</small>
+                        <p class="mb-2">{{ transfer.created_at }}</p>
+                    </div>
+                </div>
+
+                <div class="mb-3">
+                    <small class="text-muted">Original File Hash (SHA-256)</small>
+                    <div class="hash-display">{{ transfer.file_hash }}</div>
+                </div>
+
+                {% if transfer.received_hash %}
+                <div class="mb-3">
+                    <small class="text-muted">Received File Hash</small>
+                    <div class="hash-display">{{ transfer.received_hash }}</div>
+                </div>
+                {% endif %}
+
+                <!-- Verification Status -->
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <div class="pipeline-step {% if transfer.signature_verified %}success{% elif transfer.status == 'rejected' %}fail{% else %}pending{% endif %}">
+                            <i class="bi bi-pen me-2"></i>
+                            <div>
+                                <strong>Signature</strong>
+                                <small class="d-block">
+                                    {% if transfer.signature_verified %}Verified{% elif transfer.status == 'rejected' %}Failed{% else %}Pending{% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="pipeline-step {% if transfer.hash_verified %}success{% elif transfer.status == 'rejected' %}fail{% else %}pending{% endif %}">
+                            <i class="bi bi-hash me-2"></i>
+                            <div>
+                                <strong>Hash Integrity</strong>
+                                <small class="d-block">
+                                    {% if transfer.hash_verified %}Verified{% elif transfer.status == 'rejected' %}Failed{% else %}Pending{% endif %}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if transfer.status == 'sent' and transfer.receiver == user %}
+                <a href="{% url 'receive_file' transfer.id %}" class="btn btn-vault w-100 mt-3">
+                    <i class="bi bi-shield-check me-2"></i>Receive &amp; Verify
+                </a>
+                {% endif %}
+
+                {% if transfer.status == 'verified' and transfer.receiver == user %}
+                <a href="{% url 'download_file' transfer.id %}" class="btn btn-vault w-100 mt-3">
+                    <i class="bi bi-download me-2"></i>Download Decrypted File
+                </a>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Performance Metrics -->
+        {% if transfer.total_time_ms > 0 %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <i class="bi bi-speedometer me-2"></i>Performance Metrics
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-4 col-md-2">
+                        <small class="text-muted d-block">Encrypt</small>
+                        <strong>{{ transfer.encryption_time_ms|floatformat:1 }} ms</strong>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <small class="text-muted d-block">Hash</small>
+                        <strong>{{ transfer.hashing_time_ms|floatformat:1 }} ms</strong>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <small class="text-muted d-block">Sign</small>
+                        <strong>{{ transfer.signing_time_ms|floatformat:1 }} ms</strong>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <small class="text-muted d-block">Total</small>
+                        <strong>{{ transfer.total_time_ms|floatformat:1 }} ms</strong>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <small class="text-muted d-block">CPU</small>
+                        <strong>{{ transfer.cpu_usage_percent|floatformat:1 }}%</strong>
+                    </div>
+                    <div class="col-4 col-md-2">
+                        <small class="text-muted d-block">Memory</small>
+                        <strong>{{ transfer.memory_usage_mb|floatformat:1 }} MB</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Transfer Audit Trail -->
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-journal-text me-2"></i>Audit Trail
+            </div>
+            <div class="card-body p-0">
+                {% if logs %}
+                {% for log in logs %}
+                <div class="p-3 border-bottom" style="border-color: var(--cv-border) !important;">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="badge {{ log.action|action_badge }} mb-1">{{ log.get_action_display }}</span>
+                        {% if log.verification_result is not None %}
+                        <i class="bi bi-{% if log.verification_result %}check-circle text-success{% else %}x-circle text-danger{% endif %}"></i>
+                        {% endif %}
+                    </div>
+                    <small class="text-muted d-block">{{ log.timestamp|timesince }} ago</small>
+                    <small class="d-block mt-1">{{ log.details|truncatechars:100 }}</small>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted text-center py-4">No audit entries yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

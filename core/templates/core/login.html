@@ -1,0 +1,49 @@
+{% extends "core/base.html" %}
+
+{% block title %}Login - CipherVault{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center" style="margin-top: 80px;">
+    <div class="col-md-5 col-lg-4">
+        <div class="card">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-shield-lock-fill" style="font-size: 3rem; color: var(--cv-primary);"></i>
+                    <h3 class="mt-2">CipherVault</h3>
+                    <p class="text-muted">Secure Evidence Transfer System</p>
+                </div>
+
+                <form method="post" novalidate>
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="id_username" class="form-label">Username</label>
+                        {{ form.username }}
+                        {% if form.username.errors %}
+                        <div class="text-danger small mt-1">{{ form.username.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="id_password" class="form-label">Password</label>
+                        {{ form.password }}
+                        {% if form.password.errors %}
+                        <div class="text-danger small mt-1">{{ form.password.errors.0 }}</div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-vault w-100 py-2 mt-2">
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                    </button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <a href="{% url 'register' %}" class="text-decoration-none" style="color: var(--cv-primary);">
+                        Don't have an account? Register
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

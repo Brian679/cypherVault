@@ -1,0 +1,33 @@
+{
+  "keys": {
+    "bob": {
+      "fingerprint": "17a95e586318e5b8",
+      "created": "2026-03-22T20:43:04.115474",
+      "key_size": 2048,
+      "version": 2,
+      "status": "active"
+    },
+    "charlie": {
+      "fingerprint": "9fd274dcf707a486",
+      "created": "2026-03-22T20:43:10.494602",
+      "key_size": 2048,
+      "version": 2,
+      "status": "active"
+    },
+    "admin": {
+      "fingerprint": "00f949aeb5e1180a",
+      "created": "2026-03-22T20:42:32.899184",
+      "key_size": 2048,
+      "version": 1,
+      "status": "active"
+    },
+    "alice": {
+      "fingerprint": "aacc4a88b5e4bcf6",
+      "created": "2026-03-22T20:42:53.471893",
+      "key_size": 2048,
+      "version": 1,
+      "status": "active"
+    }
+  },
+  "revoked": []
+}
