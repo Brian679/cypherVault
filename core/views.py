@@ -289,11 +289,19 @@ def download_decrypted_view(request, transfer_id):
         aes_key = RSACipher.decrypt_key(
             bytes(transfer.encrypted_aes_key), receiver_private_key
         )
-        encrypted_data = transfer.encrypted_file.read()
+
+        # Explicitly open, read, and close the encrypted file
+        transfer.encrypted_file.open('rb')
+        try:
+            encrypted_data = transfer.encrypted_file.read()
+        finally:
+            transfer.encrypted_file.close()
+
         decrypted_data = AESCipher.decrypt(encrypted_data, aes_key)
 
         response = HttpResponse(decrypted_data, content_type='application/octet-stream')
         response['Content-Disposition'] = f'attachment; filename="{transfer.original_filename}"'
+        response['Content-Length'] = len(decrypted_data)
         return response
 
     except Exception as e:

@@ -292,7 +292,11 @@ class SecurityOrchestrator:
             transfer.save()
 
             with self.monitor.measure('decryption'):
-                encrypted_data = transfer.encrypted_file.read()
+                transfer.encrypted_file.open('rb')
+                try:
+                    encrypted_data = transfer.encrypted_file.read()
+                finally:
+                    transfer.encrypted_file.close()
                 decrypted_data = AESCipher.decrypt(encrypted_data, aes_key)
 
             LoggingEngine.log(

@@ -27,6 +27,34 @@
       "key_size": 2048,
       "version": 1,
       "status": "active"
+    },
+    "_test_sender": {
+      "fingerprint": "2e480087e1e14b66",
+      "created": "2026-03-22T22:52:53.591756",
+      "key_size": 2048,
+      "version": 2,
+      "status": "active"
+    },
+    "_test_receiver": {
+      "fingerprint": "9a22bc3a406a108e",
+      "created": "2026-03-22T22:52:54.103166",
+      "key_size": 2048,
+      "version": 2,
+      "status": "active"
+    },
+    "_sender": {
+      "fingerprint": "36f1d0101c2404fe",
+      "created": "2026-03-22T23:02:37.395252",
+      "key_size": 2048,
+      "version": 4,
+      "status": "active"
+    },
+    "_receiver": {
+      "fingerprint": "9c08f791c45d8c20",
+      "created": "2026-03-22T23:02:42.912611",
+      "key_size": 2048,
+      "version": 4,
+      "status": "active"
     }
   },
   "revoked": []
