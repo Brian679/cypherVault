@@ -14,6 +14,13 @@ from core.crypto import KeyManager
 class Command(BaseCommand):
     help = 'Sync RSA keys: update DB public keys from disk keys and reset broken transfers'
 
+    def add_arguments(self, parser):
+        parser.add_argument(
+            '--clean',
+            action='store_true',
+            help='Delete all existing transfers (needed when keys were out of sync)',
+        )
+
     def handle(self, *args, **options):
         keys_dir = os.path.join(settings.BASE_DIR, 'keys')
         km = KeyManager(keys_dir)
@@ -42,13 +49,19 @@ class Command(BaseCommand):
 
         self.stdout.write(self.style.SUCCESS(f'\nSynced {synced} user(s).'))
 
-        # Reset transfers that were encrypted with old (wrong) keys
-        broken = FileTransfer.objects.filter(status='sent')
-        if broken.exists():
+        # Clean up broken transfers if requested
+        if options['clean']:
+            count = FileTransfer.objects.all().count()
+            FileTransfer.objects.all().delete()
             self.stdout.write(self.style.WARNING(
-                f'\n{broken.count()} transfer(s) in "sent" status.'
-                f'\nThese may have been encrypted with old keys.'
-                f'\nUsers should re-send these files after key sync.'
+                f'\nDeleted {count} transfer(s). Users can now send fresh files.'
             ))
+        else:
+            broken = FileTransfer.objects.exclude(status__in=['verified', 'rejected']).count()
+            if broken:
+                self.stdout.write(self.style.WARNING(
+                    f'\n{broken} transfer(s) may have been encrypted with old keys.'
+                    f'\nRun with --clean to delete them: python manage.py sync_keys --clean'
+                ))
 
         self.stdout.write(self.style.SUCCESS('\nKey sync complete!'))
