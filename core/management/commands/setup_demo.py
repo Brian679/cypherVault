@@ -85,12 +85,32 @@ class Command(BaseCommand):
                     )
                 )
             else:
-                self.stdout.write(
-                    self.style.WARNING(
-                        f'User {info["username"]} already exists. '
-                        f'Use --reset to recreate.'
+                # User exists — sync DB public key with disk key
+                profile, _ = UserProfile.objects.get_or_create(user=user)
+                try:
+                    disk_pub = key_manager.get_public_key(info['username']).decode()
+                except FileNotFoundError:
+                    # No keys on disk — regenerate them
+                    key_info = key_manager.generate_user_keys(info['username'])
+                    disk_pub = key_info['public_key'].decode()
+                    profile.key_fingerprint = key_info['fingerprint']
+
+                if profile.public_key != disk_pub:
+                    profile.public_key = disk_pub
+                    profile.save()
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f'User {info["username"]} already exists — '
+                            f'synced DB key with disk key.'
+                        )
                     )
-                )
+                else:
+                    self.stdout.write(
+                        self.style.WARNING(
+                            f'User {info["username"]} already exists — '
+                            f'keys in sync.'
+                        )
+                    )
 
         # Create superuser if not exists
         if not User.objects.filter(is_superuser=True).exists():

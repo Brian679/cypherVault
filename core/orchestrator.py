@@ -98,9 +98,19 @@ class SecurityOrchestrator:
             if not receiver_profile.public_key or receiver_profile.is_key_revoked:
                 raise PipelineError('authentication', 'Receiver keys are missing or revoked')
 
-            # Get keys
+            # Get keys — always use disk keys for cryptographic operations
+            # to ensure the public/private pair is consistent
             sender_private_key = self.key_manager.get_private_key(sender.username)
-            receiver_public_key = receiver_profile.public_key.encode()
+            receiver_public_key = self.key_manager.get_public_key(receiver.username)
+
+            # Sync DB public keys with disk keys (in case they drifted)
+            disk_sender_pub = self.key_manager.get_public_key(sender.username)
+            if sender_profile.public_key != disk_sender_pub.decode():
+                sender_profile.public_key = disk_sender_pub.decode()
+                sender_profile.save()
+            if receiver_profile.public_key != receiver_public_key.decode():
+                receiver_profile.public_key = receiver_public_key.decode()
+                receiver_profile.save()
 
             # ---- Step 2: Generate file hash ----
             with self.monitor.measure('hashing'):
@@ -276,9 +286,15 @@ class SecurityOrchestrator:
                 ip_address=ip_address,
             )
 
-            # Get keys
+            # Get keys — always use disk keys for consistency
             receiver_private_key = self.key_manager.get_private_key(receiver.username)
-            sender_public_key = transfer.sender.profile.public_key.encode()
+            sender_public_key = self.key_manager.get_public_key(transfer.sender.username)
+
+            # Sync DB public key with disk key for sender (in case they drifted)
+            sender_profile = transfer.sender.profile
+            if sender_profile.public_key != sender_public_key.decode():
+                sender_profile.public_key = sender_public_key.decode()
+                sender_profile.save()
 
             # ---- Step 7: Decrypt AES key ----
             with self.monitor.measure('key_decryption'):
