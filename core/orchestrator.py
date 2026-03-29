@@ -256,7 +256,7 @@ class SecurityOrchestrator:
                 )
                 raise PipelineError('authentication', 'You are not the intended receiver')
 
-            if transfer.status not in ('sent', 'received'):
+            if transfer.status not in ('sent', 'received', 'verified'):
                 raise PipelineError(
                     'status',
                     f"Transfer already processed (status: {transfer.status}). "
@@ -415,6 +415,14 @@ class SecurityOrchestrator:
             }
 
             if integrity_ok:
+                # Save the decrypted file so it can be downloaded later
+                from django.core.files.base import ContentFile
+                decrypted_filename = transfer.original_filename
+                transfer.decrypted_file.save(
+                    decrypted_filename,
+                    ContentFile(decrypted_data),
+                    save=True,
+                )
                 result['file_data'] = base64.b64encode(decrypted_data).decode()
             else:
                 result['file_data'] = None

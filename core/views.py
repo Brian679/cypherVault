@@ -280,24 +280,17 @@ def download_decrypted_view(request, transfer_id):
         messages.error(request, 'File has not been verified yet.')
         return redirect('receive_file', transfer_id=transfer_id)
 
-    # Re-decrypt the file for download
+    # Serve the saved decrypted file (allows multiple downloads)
     try:
-        orchestrator = SecurityOrchestrator()
-        receiver_private_key = orchestrator.key_manager.get_private_key(request.user.username)
+        if not transfer.decrypted_file:
+            messages.error(request, 'Decrypted file not found. Please verify the file again.')
+            return redirect('receive_file', transfer_id=transfer_id)
 
-        from .crypto import RSACipher, AESCipher
-        aes_key = RSACipher.decrypt_key(
-            bytes(transfer.encrypted_aes_key), receiver_private_key
-        )
-
-        # Explicitly open, read, and close the encrypted file
-        transfer.encrypted_file.open('rb')
+        transfer.decrypted_file.open('rb')
         try:
-            encrypted_data = transfer.encrypted_file.read()
+            decrypted_data = transfer.decrypted_file.read()
         finally:
-            transfer.encrypted_file.close()
-
-        decrypted_data = AESCipher.decrypt(encrypted_data, aes_key)
+            transfer.decrypted_file.close()
 
         response = HttpResponse(decrypted_data, content_type='application/octet-stream')
         response['Content-Disposition'] = f'attachment; filename="{transfer.original_filename}"'

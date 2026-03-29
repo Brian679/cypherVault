@@ -60,6 +60,7 @@ class FileTransfer(models.Model):
     original_filename = models.CharField(max_length=255)
     file_size = models.BigIntegerField(default=0)
     encrypted_file = models.FileField(upload_to='encrypted/', blank=True)
+    decrypted_file = models.FileField(upload_to='decrypted/', blank=True)
     encrypted_aes_key = models.BinaryField(blank=True, null=True)
 
     # Security fields
