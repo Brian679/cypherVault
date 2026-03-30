@@ -169,30 +169,83 @@
 
 <!-- Recent Activity -->
 <div class="card mt-4">
-    <div class="card-header">
-        <i class="bi bi-clock-history me-2"></i>Recent Activity
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-clock-history me-2"></i>Recent Activity</span>
+        {% if recent_logs %}
+        <small class="text-muted">Click a row to expand details</small>
+        {% endif %}
     </div>
     <div class="card-body p-0">
         {% if recent_logs %}
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>Time</th>
-                        <th>Action</th>
-                        <th>Details</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in recent_logs %}
-                    <tr>
-                        <td>{{ log.timestamp|timesince }} ago</td>
-                        <td><span class="badge {{ log.action|action_badge }}">{{ log.get_action_display }}</span></td>
-                        <td class="small">{{ log.details|truncatechars:80 }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        <div class="accordion accordion-flush" id="activityAccordion">
+            {% for log in recent_logs %}
+            <div class="accordion-item" style="background: transparent; border-bottom: 1px solid var(--cv-border);">
+                <h2 class="accordion-header" id="actHead{{ forloop.counter }}">
+                    <button class="accordion-button collapsed px-3 py-2" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#actBody{{ forloop.counter }}"
+                            aria-expanded="false" aria-controls="actBody{{ forloop.counter }}"
+                            style="background: transparent; color: var(--cv-text); font-size: 0.9rem; box-shadow: none;">
+                        <span class="d-flex align-items-center gap-2 flex-wrap w-100">
+                            <span class="text-muted" style="min-width: 110px; font-size: 0.82rem;">{{ log.timestamp|timesince }} ago</span>
+                            <span class="badge {{ log.action|action_badge }}">{{ log.get_action_display }}</span>
+                            <span class="small text-truncate" style="max-width: 400px;">{{ log.details|truncatechars:60 }}</span>
+                        </span>
+                    </button>
+                </h2>
+                <div id="actBody{{ forloop.counter }}" class="accordion-collapse collapse"
+                     aria-labelledby="actHead{{ forloop.counter }}" data-bs-parent="#activityAccordion">
+                    <div class="accordion-body px-4 py-3" style="background: var(--cv-bg); border-top: 1px solid var(--cv-border);">
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <small class="text-muted d-block">Full Details</small>
+                                <span class="small">{{ log.details|default:"—" }}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">Actor</small>
+                                <span class="small">{{ log.actor.username|default:"system" }}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">Target User</small>
+                                <span class="small">{{ log.target_user.username|default:"—" }}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">IP Address</small>
+                                <span class="small font-monospace">{{ log.ip_address|default:"—" }}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">Verification</small>
+                                <span class="small">
+                                    {% if log.verification_result is None %}—
+                                    {% elif log.verification_result %}<span class="text-success"><i class="bi bi-check-circle"></i> Passed</span>
+                                    {% else %}<span class="text-danger"><i class="bi bi-x-circle"></i> Failed</span>
+                                    {% endif %}
+                                </span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">Timestamp</small>
+                                <span class="small">{{ log.timestamp|date:"M d, Y H:i:s" }}</span>
+                            </div>
+                            <div class="col-md-3">
+                                <small class="text-muted d-block">Transfer</small>
+                                <span class="small">
+                                    {% if log.transfer %}
+                                    <a href="{% url 'transfer_detail' log.transfer.id %}" style="color: var(--cv-primary);">
+                                        {{ log.transfer.original_filename|truncatechars:20 }}
+                                    </a>
+                                    {% else %}—{% endif %}
+                                </span>
+                            </div>
+                            {% if log.file_hash %}
+                            <div class="col-12">
+                                <small class="text-muted d-block">File Hash (SHA-256)</small>
+                                <span class="small font-monospace hash-display" style="font-size: 0.78rem;">{{ log.file_hash }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
         </div>
         {% else %}
         <p class="text-muted text-center py-4">No activity yet.</p>
